@@ -7,6 +7,9 @@ from rest_framework_simplejwt.views import (TokenObtainPairView,TokenRefreshView
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+    path('api/v1/', include('apiv1.urls')),
+    path('student/', include('student.urls')),
+
     
     path('login', views.CustomTokenObtainPairView.as_view(), name='login'),
     path('logout', views.logout_view, name='logout'),
