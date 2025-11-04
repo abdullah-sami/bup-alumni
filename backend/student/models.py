@@ -13,8 +13,7 @@ class Batch(models.Model):
 
 
 class Program(models.Model):
-    PROGRAM_CHOICE = [('bba', 'BBA'), ('mba', 'MBA')]
-    name = models.CharField(max_length=100, choices=PROGRAM_CHOICE)
+    name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name

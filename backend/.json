@@ -1,0 +1,14 @@
+{
+
+    "username": "24230115084", // This is the unique identifier for the user (also the university id)
+    "email": "user@example.com", // can be null if not provided
+    "first_name": "John", 
+    "last_name": "Doe",
+    "bio": "A brief bio about John Doe.",
+    "profile_pic": "http://example.com/profile.jpg",
+    "batch": "15",
+    "program": "bba",
+    "current_position": "Software Engineer",
+    "current_company": "Tech Corp",
+    "is_cr": false,
+}

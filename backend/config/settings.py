@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'apiv1',
-    'student'
+    'student',
 
 ]
 
@@ -147,3 +147,10 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
+
+
+# Authentication Backends (MUST be at root level)
+AUTHENTICATION_BACKENDS = [
+    'config.authentication.MultiFieldAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
