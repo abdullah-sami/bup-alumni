@@ -12,6 +12,8 @@ urlpatterns = [
 
     path('', include(router.urls)),
 
+    path('search', views.student_search, name='student-search'),
+
 
     path('register', views.StudentRegistrationView.as_view(), name='student-register'),
     path('login', CustomTokenObtainPairView.as_view(), name='login'),
