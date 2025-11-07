@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import status, generics, viewsets
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.decorators import api_view, permission_classes, action
 from django.db.models import Q, Value, IntegerField, Case, When
 from student.serializers import StudentRegistrationSerializer, StudentProfileSerializer
@@ -41,7 +41,7 @@ class StudentProfileDetailView(viewsets.ViewSet):
     
     GET /profile/ - List all profiles with optional filters:
         ?batch=56th - Filter by batch title
-        ?program=bba - Filter by program name
+        ?country=Bangladesh - Filter by country
         ?is_cr=true - Filter by CR status
         ?company=google - Fuzzy search by company name
         ?position=engineer - Fuzzy search by job position
@@ -51,6 +51,7 @@ class StudentProfileDetailView(viewsets.ViewSet):
     """
     serializer_class = StudentProfileSerializer
     queryset = StudentProfile.objects.all()
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_permissions(self):
         # Anyone can view, but only authenticated users can update
@@ -77,17 +78,17 @@ class StudentProfileDetailView(viewsets.ViewSet):
         
         Query Parameters:
         - batch: Filter by batch title (exact match, case-insensitive)
-        - program: Filter by program name (exact match, case-insensitive)
+        - country: Filter by country name (exact match, case-insensitive)
         - is_cr: Filter by CR status (true/false)
         - company: Fuzzy search by company name (contains, case-insensitive)
         - position: Fuzzy search by job position (contains, case-insensitive)
         """
         # Start with all profiles, optimized with select_related
-        profiles = self.queryset.select_related('batch', 'program')
+        profiles = self.queryset.select_related('batch')
         
         # Get filter parameters
         batch_filter = request.query_params.get('batch', None)
-        program_filter = request.query_params.get('program', None)
+        country_filter = request.query_params.get('country', None)
         is_cr_filter = request.query_params.get('is_cr', None)
         company_filter = request.query_params.get('company', None)
         position_filter = request.query_params.get('position', None)
@@ -96,9 +97,9 @@ class StudentProfileDetailView(viewsets.ViewSet):
         if batch_filter:
             profiles = profiles.filter(batch__title__iexact=batch_filter)
         
-        if program_filter:
-            profiles = profiles.filter(program__name__iexact=program_filter)
-        
+        if country_filter:
+            profiles = profiles.filter(country__iexact=country_filter)
+
         if is_cr_filter is not None:
             # Convert string to boolean
             is_cr_bool = is_cr_filter.lower() in ('true', '1', 'yes')
@@ -113,7 +114,7 @@ class StudentProfileDetailView(viewsets.ViewSet):
             profiles = profiles.filter(current_job_position__icontains=position_filter)
         
         # Order by most relevant: CR first, then by name
-        profiles = profiles.order_by('-is_cr', 'first_name', 'last_name')
+        profiles = profiles.order_by('-id', '-is_cr', 'first_name', 'last_name')
         
         serializer = self.serializer_class(profiles, many=True)
         
@@ -122,14 +123,15 @@ class StudentProfileDetailView(viewsets.ViewSet):
             'count': len(serializer.data),
             'filters': {
                 'batch': batch_filter,
-                'program': program_filter,
+                'country': country_filter,
                 'is_cr': is_cr_filter,
                 'company': company_filter,
                 'position': position_filter,
             },
             'results': serializer.data
         })
-
+    
+    # @action(detail=True, methods=['put'], permission_classes=[IsAuthenticated])
     def update(self, request, pk=None):
         """Handles PUT /profile/{pk} (Full Update)"""
         try:
@@ -146,6 +148,7 @@ class StudentProfileDetailView(viewsets.ViewSet):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    # @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
     def partial_update(self, request, pk=None):
         """Handles PATCH /profile/{pk} (Partial Update)"""
         try:
@@ -167,7 +170,7 @@ class StudentProfileDetailView(viewsets.ViewSet):
 @permission_classes([AllowAny])
 def student_search(request):
     """
-    Search students by name, email, phone, batch, program, company, or position
+    Search students by name, email, phone, batch, company, or position
     GET /api/v1/search/?q=keyword
     
     Returns results ordered by relevance:
@@ -208,14 +211,14 @@ def student_search(request):
     search_query |= Q(phone__icontains=query)
     search_query |= Q(batch__title__icontains=query)
     search_query |= Q(batch__session__icontains=query)
-    search_query |= Q(program__name__icontains=query)
+    search_query |= Q(country__icontains=query)
     search_query |= Q(current_company__icontains=query)
     search_query |= Q(current_job_position__icontains=query)
     search_query |= Q(bio__icontains=query)
     
     # Query optimization: Use select_related to reduce database hits
     results = StudentProfile.objects.filter(search_query).select_related(
-        'batch', 'program'
+        'batch'
     ).annotate(
         # Relevance scoring for ordering
         relevance=Case(
@@ -235,8 +238,8 @@ def student_search(request):
             When(Q(first_name__icontains=query) | Q(last_name__icontains=query), then=Value(50)),
             # Batch match
             When(batch__title__icontains=query, then=Value(40)),
-            # Program match
-            When(program__name__icontains=query, then=Value(35)),
+            # Country match
+            When(country__icontains=query, then=Value(35)),
             # Company or position match
             When(Q(current_company__icontains=query) | Q(current_job_position__icontains=query), then=Value(30)),
             # Email or phone contains
@@ -278,11 +281,11 @@ class VerificationView(viewsets.ViewSet):
 
     def list(self, request):
         """Handles GET /admin/verify/ to list unverified profiles"""
-        profiles = self.queryset.select_related('batch', 'program')
+        profiles = self.queryset.select_related('batch')
         serializer = self.serializer_class(profiles, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def verify(self, request, pk=None):
         """Handles POST /admin/verify/{pk}/verify/ to verify a profile"""
         try:

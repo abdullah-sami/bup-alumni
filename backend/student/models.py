@@ -12,11 +12,6 @@ class Batch(models.Model):
     
 
 
-class Program(models.Model):
-    name = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.name
     
 
 class Role(models.Model):
@@ -34,7 +29,7 @@ class StudentProfile(models.Model):
     bio = models.TextField(blank=True, null=True)
     profile_pic =  models.URLField(blank=True, null=True)
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='students') 
-    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='students')
+    country = models.CharField(max_length=100, blank=True, null=True, default='Bangladesh')
 
     current_job_position = models.CharField(max_length=200, blank=True, null=True)
     current_company = models.CharField(max_length=200, blank=True, null=True)

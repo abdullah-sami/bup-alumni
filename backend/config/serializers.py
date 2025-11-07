@@ -45,7 +45,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             'last_name': profile.last_name,
             'uni_id': profile.uni_id,
             'batch': str(profile.batch),
-            'program': profile.program.name,
             'is_verified': profile.is_verified,
             'is_cr': profile.is_cr,
         }

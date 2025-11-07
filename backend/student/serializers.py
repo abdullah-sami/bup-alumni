@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import StudentProfile, Batch, Program
+from .models import StudentProfile, Batch
 from django.db import transaction
 
 
@@ -13,7 +13,7 @@ class StudentRegistrationSerializer(serializers.Serializer):
     bio = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     profile_pic = serializers.URLField(required=False, allow_null=True, allow_blank=True)
     batch = serializers.CharField(max_length=100, required=True)
-    program = serializers.ChoiceField(default='bba', choices=[('bba', 'BBA')])
+    country = serializers.CharField(max_length=100, default='Bangladesh', allow_blank=True)
     current_position = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
     current_company = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
     is_cr = serializers.BooleanField(default=False)
@@ -54,14 +54,13 @@ class StudentRegistrationSerializer(serializers.Serializer):
         bio = validated_data.get('bio')
         profile_pic = validated_data.get('profile_pic')
         batch_title = validated_data['batch']
-        program_name = validated_data['program']
+        country = validated_data['country']
         current_position = validated_data.get('current_position')
         current_company = validated_data.get('current_company')
         is_cr = validated_data.get('is_cr', False)
 
-        # Get batch and program instances
+        # Get batch instances
         batch = Batch.objects.get(title=batch_title)
-        program = Program.objects.get(name=program_name)
 
         # Create Django User
         user = User.objects.create_user(
@@ -81,7 +80,7 @@ class StudentRegistrationSerializer(serializers.Serializer):
             bio=bio,
             profile_pic=profile_pic,
             batch=batch,
-            program=program,
+            country=country,
             current_job_position=current_position,
             current_company=current_company,
             is_cr=is_cr,
@@ -111,7 +110,7 @@ class StudentRegistrationSerializer(serializers.Serializer):
             'student_profile': {
                 'uni_id': student_profile.uni_id,
                 'batch': student_profile.batch.title,
-                'program': student_profile.program.name,
+                'country': student_profile.country,
                 'is_cr': student_profile.is_cr,
                 'is_verified': student_profile.is_verified,
                 'profile_pic': student_profile.profile_pic,
@@ -121,13 +120,12 @@ class StudentRegistrationSerializer(serializers.Serializer):
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     batch = serializers.CharField(source='batch.title', read_only=True)
-    program = serializers.CharField(source='program.name', read_only=True)
     
     class Meta:
         model = StudentProfile
         fields = [
             'id', 'first_name', 'last_name', 'uni_id', 'bio', 'profile_pic',
-            'batch', 'program', 'current_job_position', 'current_company',
+            'batch', 'country', 'current_job_position', 'current_company',
             'email', 'phone', 'linkedin', 'facebook', 'instagram',
             'is_cr', 'is_verified'
         ]
