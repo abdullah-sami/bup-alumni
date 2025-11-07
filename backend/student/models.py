@@ -25,7 +25,7 @@ class Role(models.Model):
 class StudentProfile(models.Model):
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
-    uni_id = models.CharField(max_length=20, unique=True)
+    uni_id = models.CharField(max_length=20)
     bio = models.TextField(blank=True, null=True)
     profile_pic =  models.URLField(blank=True, null=True)
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='students') 

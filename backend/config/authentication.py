@@ -30,7 +30,7 @@ class MultiFieldAuthBackend(ModelBackend):
                 except User.DoesNotExist:
                     # If not found by email in User, search in StudentProfile
                     student_profile = StudentProfile.objects.filter(
-                        Q(email=username) | Q(phone=username)
+                        Q(uni_id=username) | Q(email=username) | Q(phone=username)
                     ).first()
 
                     

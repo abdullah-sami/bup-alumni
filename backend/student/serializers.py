@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import StudentProfile, Batch
+from student.models import StudentProfile, Batch
 from django.db import transaction
 
 
@@ -46,9 +46,10 @@ class StudentRegistrationSerializer(serializers.Serializer):
         """Create User and StudentProfile"""
         
         # Extract data
-        uni_id = validated_data['username'] if validated_data.get('username') else validated_data.get('email')
-        password = validated_data.get('password')
+        # FIXED: Properly handle uni_id vs email
+        uni_id = validated_data.get('username')  # This should be the actual uni_id
         email = validated_data.get('email')
+        password = validated_data.get('password')
         first_name = validated_data['first_name']
         last_name = validated_data['last_name']
         bio = validated_data.get('bio')
@@ -59,24 +60,29 @@ class StudentRegistrationSerializer(serializers.Serializer):
         current_company = validated_data.get('current_company')
         is_cr = validated_data.get('is_cr', False)
 
-        # Get batch instances
+        # Determine what to use as username for User model
+        # If uni_id is provided, use it; otherwise fallback to email
+        username_for_user = uni_id if uni_id else email
+
+        # Get batch instance
         batch = Batch.objects.get(title=batch_title)
 
         # Create Django User
         user = User.objects.create_user(
-            username=uni_id,
-            email=email if validated_data.get('email') else '',
+            username=username_for_user,
+            email=email if email else '',
             first_name=first_name,
             last_name=last_name,
             password=password  
         )
 
         # Create StudentProfile
+        # FIXED: Always store the actual uni_id, not email
         student_profile = StudentProfile.objects.create(
             first_name=first_name,
             last_name=last_name,
-            email=email if validated_data.get('email') else '',
-            uni_id=uni_id if validated_data.get('uni_id') else email,
+            email=email if email else '',
+            uni_id=uni_id if uni_id else email,  # Store actual uni_id
             bio=bio,
             profile_pic=profile_pic,
             batch=batch,
@@ -119,7 +125,7 @@ class StudentRegistrationSerializer(serializers.Serializer):
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
-    batch = serializers.CharField(source='batch.title', read_only=True)
+    batch = serializers.CharField(source='batch.title')
     
     class Meta:
         model = StudentProfile
@@ -129,4 +135,4 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             'email', 'phone', 'linkedin', 'facebook', 'instagram',
             'is_cr', 'is_verified'
         ]
-        read_only_fields = ['uni_id', 'is_verified']
+        read_only_fields = ['is_verified']
