@@ -5,7 +5,7 @@ from django.db import transaction
 
 
 class StudentRegistrationSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=20, required=True)
+    username = serializers.CharField(max_length=20, required=False)
     password = serializers.CharField(write_only=True, required=True)
     email = serializers.EmailField(required=False, allow_null=True, allow_blank=True)
     first_name = serializers.CharField(max_length=30, required=True)
@@ -13,7 +13,7 @@ class StudentRegistrationSerializer(serializers.Serializer):
     bio = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     profile_pic = serializers.URLField(required=False, allow_null=True, allow_blank=True)
     batch = serializers.CharField(max_length=100, required=True)
-    program = serializers.ChoiceField(choices=['bba', 'mba'], required=True)
+    program = serializers.ChoiceField(default='bba', choices=[('bba', 'BBA')])
     current_position = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
     current_company = serializers.CharField(max_length=200, required=False, allow_null=True, allow_blank=True)
     is_cr = serializers.BooleanField(default=False)
@@ -46,9 +46,9 @@ class StudentRegistrationSerializer(serializers.Serializer):
         """Create User and StudentProfile"""
         
         # Extract data
-        uni_id = validated_data['username']
+        uni_id = validated_data['username'] if validated_data.get('username') else validated_data.get('email')
         password = validated_data.get('password')
-        email = validated_data.get('email') or f"{uni_id}@temp.local"  # Temporary email if not provided
+        email = validated_data.get('email')
         first_name = validated_data['first_name']
         last_name = validated_data['last_name']
         bio = validated_data.get('bio')
@@ -76,8 +76,8 @@ class StudentRegistrationSerializer(serializers.Serializer):
         student_profile = StudentProfile.objects.create(
             first_name=first_name,
             last_name=last_name,
-            uni_id=uni_id,
             email=email if validated_data.get('email') else '',
+            uni_id=uni_id if validated_data.get('uni_id') else email,
             bio=bio,
             profile_pic=profile_pic,
             batch=batch,
@@ -95,6 +95,7 @@ class StudentRegistrationSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
         """Format the response"""
+
         user = instance['user']
         student_profile = instance['student_profile']
         
@@ -125,7 +126,7 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
         fields = [
-            'first_name', 'last_name', 'uni_id', 'bio', 'profile_pic',
+            'id', 'first_name', 'last_name', 'uni_id', 'bio', 'profile_pic',
             'batch', 'program', 'current_job_position', 'current_company',
             'email', 'phone', 'linkedin', 'facebook', 'instagram',
             'is_cr', 'is_verified'

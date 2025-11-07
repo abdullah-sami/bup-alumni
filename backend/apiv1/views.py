@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import status, generics, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from django.db.models import Q, Value, IntegerField, Case, When
 from student.serializers import StudentRegistrationSerializer, StudentProfileSerializer
 from student.models import StudentProfile
@@ -262,3 +262,44 @@ def student_search(request):
         },
         status=status.HTTP_200_OK
     )
+
+
+
+
+
+class VerificationView(viewsets.ViewSet):
+    """
+    ViewSet for verifying student profiles
+    GET /admin/verify/ - List all unverified profiles
+    POST /admin/verify/{pk}/ - Verify a specific profile
+    """
+    serializer_class = StudentProfileSerializer
+    queryset = StudentProfile.objects.filter(is_verified=False)
+
+    def list(self, request):
+        """Handles GET /admin/verify/ to list unverified profiles"""
+        profiles = self.queryset.select_related('batch', 'program')
+        serializer = self.serializer_class(profiles, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def verify(self, request, pk=None):
+        """Handles POST /admin/verify/{pk}/verify/ to verify a profile"""
+        try:
+            profile = StudentProfile.objects.get(pk=pk)
+        except StudentProfile.DoesNotExist:
+            return Response(
+                {'message': 'Profile not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        profile.is_verified = True
+        profile.save()
+        
+        serializer = self.serializer_class(profile)
+        return Response(
+            {
+                'message': 'Profile verified successfully',
+                'profile': serializer.data
+            }
+        )
