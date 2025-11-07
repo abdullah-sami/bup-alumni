@@ -2,7 +2,7 @@
 
 **Base URL** 
 ```bash
-ekhononinai.com
+https://innoversebd.bdix.cloud/bup
 ```
 
 ## API Endpoints
@@ -242,10 +242,23 @@ Content-Type: application/json
 **Response** (200 OK):
 ```json
 {
-  "id": 1,
-  "first_name": "John",
-  "last_name": "Doe",
-  // ... updated profile fields
+    "id": 1,
+    "first_name": "John",
+    "last_name": "Doe",
+    "uni_id": "najib2@gmail.com",
+    "bio": "Updated bio",
+    "profile_pic": "https://example.com/new-pic.jpg",
+    "batch": "GEN15",
+    "program": "bba",
+    "current_job_position": "Senior Software Engineer",
+    "current_company": "New Company",
+    "email": "najib2@gmail.com",
+    "phone": "01712345678",
+    "linkedin": "https://linkedin.com/in/johndoe",
+    "facebook": "https://facebook.com/johndoe",
+    "instagram": "https://instagram.com/johndoe",
+    "is_cr": false,
+    "is_verified": false
 }
 ```
 
@@ -265,9 +278,22 @@ Content-Type: application/json
 ```json
 {
   "id": 1,
-  "first_name": "John",
-  "last_name": "Doe",
-  // ... updated profile fields
+    "first_name": "John",
+    "last_name": "Doe",
+    "uni_id": "najib2@gmail.com",
+    "bio": "Updated bio",
+    "profile_pic": "https://example.com/new-pic.jpg",
+    "batch": "GEN15",
+    "program": "bba",
+    "current_job_position": "Senior Software Engineer",
+    "current_company": "New Company",
+    "email": "najib2@gmail.com",
+    "phone": "01712345678",
+    "linkedin": "https://linkedin.com/in/johndoe",
+    "facebook": "https://facebook.com/johndoe",
+    "instagram": "https://instagram.com/johndoe2",
+    "is_cr": false,
+    "is_verified": false
 }
 ```
 
